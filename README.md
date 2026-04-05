@@ -2,7 +2,6 @@
 
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.13-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-25-orange.svg)](https://www.oracle.com/java/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Build](https://img.shields.io/badge/Build-Maven-red.svg)](https://maven.apache.org/)
 
 **FlyChat** is a high-performance, secure, and scalable real-time chat platform built with **Spring Boot 3**. It is designed to provide a seamless and secure messaging experience with end-to-end encryption support and a robust dual-database architecture.
@@ -94,17 +93,6 @@ The application uses an `application.yaml` file for configuration. You can overr
 
 The server will start on `http://localhost:8080` (default).
 
----
-
-## 📄 License
-
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! If you find a bug or have a feature request, please open an issue or submit a pull request.
 
 ---
 
