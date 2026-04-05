@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: fly-chat
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/fly_chat?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/fly-chat}
+      auto-index-creation: true
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    # open-in-view: false
+    # properties:
+    #   hibernate:
+    #     format_sql: true
+  servlet:
+    multipart:
+      max-file-size: ${CHAT_MEDIA_MAX_FILE_SIZE:10MB}
+      max-request-size: ${CHAT_MEDIA_MAX_REQUEST_SIZE:10MB}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+logging:
+  level:
+    '[com.chat.fly.app]': ${APP_LOG_LEVEL:INFO}
+    '[org.springframework.security]': ${SECURITY_LOG_LEVEL:INFO}
+
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:change-me-change-me-change-me-change-me}
+      issuer: ${JWT_ISSUER:fly-chat}
+      access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:12h}
+
+chat:
+  websocket:
+    endpoint: ${CHAT_WS_ENDPOINT:/ws}
+    application-destination-prefix: ${CHAT_WS_APP_PREFIX:/app}
+    user-destination-prefix: ${CHAT_WS_USER_PREFIX:/user}
+    topic-prefix: ${CHAT_WS_TOPIC_PREFIX:/topic}
+    queue-prefix: ${CHAT_WS_QUEUE_PREFIX:/queue}
+    allowed-origin-patterns:
+      - ${CHAT_WS_ALLOWED_ORIGIN:http://localhost:*}
+      - ${CHAT_WS_ALLOWED_ORIGIN_LAN:http://192.168.1.5:*}
+  media:
+    upload-dir: ${CHAT_MEDIA_UPLOAD_DIR:uploads}
+    max-file-size-bytes: ${CHAT_MEDIA_MAX_FILE_SIZE_BYTES:10485760}
+    allowed-content-types:
+      - image/jpeg
+      - image/png
+      - image/webp
+      - application/pdf
