@@ -51,7 +51,7 @@ public class UserKeyStore {
     private String signedPreKeySignature;
 
     @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "user_one_time_keys", joinColumns = @JoinColumn(name = "key_store_id"))
+    @CollectionTable(name = "user_one_time_pre_keys", joinColumns = @JoinColumn(name = "key_store_id"))
     @jakarta.persistence.MapKeyColumn(name = "key_id")
     @Column(name = "pre_key", nullable = false, length = 128)
     private Map<Integer, String> oneTimePreKeys = new HashMap<>();

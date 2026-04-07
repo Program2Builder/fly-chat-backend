@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -203,7 +204,8 @@ public class ChatService {
         ChatGroup group = chatGroupRepository.findById(groupId)
                 .orElseThrow(() -> new IllegalArgumentException("Group not found"));
 
-        // Allow both the creator to remove anyone, and users to remove themselves (Leave Group)
+        // Allow both the creator to remove anyone, and users to remove themselves
+        // (Leave Group)
         boolean isCreator = group.getCreator() != null && group.getCreator().getUsername().equals(requesterUsername);
         boolean isSelf = requesterUsername.equals(targetUsername);
 
@@ -212,9 +214,9 @@ public class ChatService {
         }
 
         AppUser targetUser = getUserByUsername(targetUsername);
-        
+
         if (isCreator && targetUsername.equals(group.getCreator().getUsername())) {
-             throw new IllegalArgumentException("Creator cannot remove themselves. Delete the group instead.");
+            throw new IllegalArgumentException("Creator cannot remove themselves. Delete the group instead.");
         }
 
         group.getMembers().removeIf(m -> m.getUsername().equals(targetUser.getUsername()));
@@ -243,9 +245,10 @@ public class ChatService {
         return mediaRepo.save(media);
     }
 
-    public void updateProfilePicture(String username, org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
+    public void updateProfilePicture(String username, org.springframework.web.multipart.MultipartFile file)
+            throws java.io.IOException {
         AppUser user = getUserByUsername(username);
-        
+
         // Use existing media storage service
         com.chat.fly.app.chat.model.Media media = saveMedia(mediaStorageService.store(file));
         user.setProfilePictureId(media.getId());
@@ -259,7 +262,7 @@ public class ChatService {
         return "/api/chat/media/" + profilePictureId + "/download";
     }
 
-    public Media findMedia(String id) {
+    public Media findMedia(@NonNull String id) {
         return mediaRepo.findById(id).orElse(null);
     }
 
@@ -408,7 +411,7 @@ public class ChatService {
         store.setUser(user);
         store.setRegistrationId(request.registrationId());
         store.setIdentityPublicKey(request.identityPublicKey());
-        
+
         if (request.signedPreKey() != null) {
             store.setSignedPreKeyId(request.signedPreKey().keyId());
             store.setSignedPreKey(request.signedPreKey().publicKey());
