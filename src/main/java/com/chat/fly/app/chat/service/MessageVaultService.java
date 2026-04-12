@@ -29,7 +29,7 @@ public class MessageVaultService {
      * Upsert a single vault entry for the given user.
      * The ciphertext is never logged (zero-knowledge storage).
      */
-    public VaultEntryResponse storeEntry(Long userId, String messageId, String ciphertext) {
+    public VaultEntryResponse storeEntry(String userId, String messageId, String ciphertext, String senderId, String receiverId) {
         MessageVaultEntry entry = vaultRepository
                 .findByUserIdAndMessageId(userId, messageId)
                 .orElseGet(() -> {
@@ -41,6 +41,8 @@ public class MessageVaultService {
                 });
 
         entry.setCiphertext(ciphertext);
+        entry.setSenderId(senderId);
+        entry.setReceiverId(receiverId);
         MessageVaultEntry saved = vaultRepository.save(entry);
         return toResponse(saved);
     }
@@ -48,22 +50,41 @@ public class MessageVaultService {
     /**
      * Batch upsert vault entries. Returns the count of saved entries.
      */
-    public int storeEntries(Long userId, List<VaultStoreRequest> entries) {
+    public int storeEntries(String userId, List<VaultStoreRequest> entries) {
         for (VaultStoreRequest req : entries) {
-            storeEntry(userId, req.messageId(), req.ciphertext());
+            storeEntry(userId, req.messageId(), req.ciphertext(), req.senderId(), req.receiverId());
         }
         return entries.size();
     }
 
     /**
-     * Return a paginated list of vault entries for the given user,
-     * ordered by created_at DESC.
+     * Return a paginated list of vault entries for the authenticated user.
+     * Searches both numeric userId and username.
      */
-    public VaultPageResponse getEntries(Long userId, Pageable pageable) {
+    public VaultPageResponse getEntries(String userId, String username, Pageable pageable) {
         List<MessageVaultEntry> page = vaultRepository
-                .findByUserIdOrderByCreatedAtDesc(userId, pageable);
+                .findAllByUserIdOrUsername(userId, username, pageable);
 
-        long total = vaultRepository.countByUserId(userId);
+        long total = vaultRepository.countAllByUserIdOrUsername(userId, username);
+        long fetched = (long) pageable.getPageNumber() * pageable.getPageSize() + page.size();
+        boolean hasMore = fetched < total;
+
+        List<VaultEntryResponse> responses = page.stream()
+                .map(this::toResponse)
+                .toList();
+
+        return new VaultPageResponse(responses, hasMore, pageable.getPageNumber(), pageable.getPageSize());
+    }
+
+    /**
+     * Return a paginated list of vault entries for a specific direct conversation.
+     * Searches by both numeric userId and username to ensure legacy recovery.
+     */
+    public VaultPageResponse getDirectEntries(String userId, String username, String targetUsername, Pageable pageable) {
+        List<MessageVaultEntry> page = vaultRepository
+                .findDirectConversation(userId, username, targetUsername, pageable);
+
+        long total = vaultRepository.countDirectConversation(userId, username, targetUsername);
         long fetched = (long) pageable.getPageNumber() * pageable.getPageSize() + page.size();
         boolean hasMore = fetched < total;
 
@@ -77,7 +98,7 @@ public class MessageVaultService {
     /**
      * Fetch a single vault entry for the given user.
      */
-    public VaultEntryResponse getEntry(Long userId, String messageId) {
+    public VaultEntryResponse getEntry(String userId, String messageId) {
         log.info("Fetching vault entry for userId: {}, messageId: {}", userId, messageId);
         return vaultRepository.findByUserIdAndMessageId(userId, messageId)
                 .map(this::toResponse)
@@ -91,7 +112,7 @@ public class MessageVaultService {
      * Delete a vault entry by userId + messageId (idempotent — no error if not
      * found).
      */
-    public void deleteEntry(Long userId, String messageId) {
+    public void deleteEntry(String userId, String messageId) {
         vaultRepository.deleteByUserIdAndMessageId(userId, messageId);
     }
 

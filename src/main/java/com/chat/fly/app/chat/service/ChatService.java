@@ -26,6 +26,7 @@ import com.chat.fly.app.chat.dto.CreateChatGroupRequest;
 import com.chat.fly.app.chat.model.ChatGroup;
 import com.chat.fly.app.chat.model.ChatMessage;
 import com.chat.fly.app.chat.model.Media;
+import com.chat.fly.app.chat.model.MessageStatus;
 import com.chat.fly.app.chat.model.MessageType;
 import com.chat.fly.app.chat.repository.ChatGroupRepository;
 import com.chat.fly.app.chat.repository.ChatMessageRepository;
@@ -59,6 +60,13 @@ public class ChatService {
         return messageRepo.save(msg);
     }
 
+    public ChatMessage updateMessageStatus(String messageId, MessageStatus newStatus) {
+        ChatMessage msg = messageRepo.findById(messageId)
+                .orElseThrow(() -> new IllegalArgumentException("Message not found"));
+        msg.setStatus(newStatus);
+        return messageRepo.save(msg);
+    }
+
     public Page<ChatMessage> getMessagesForRoom(String roomId, Pageable pageable) {
         return messageRepo.findByRoomId(roomId, pageable);
     }
@@ -75,7 +83,8 @@ public class ChatService {
                 .map(user -> new ChatContactResponse(
                         user.getUsername(),
                         user.getDisplayName(),
-                        lastInteractionByUser.get(user.getUsername())))
+                        lastInteractionByUser.get(user.getUsername()),
+                        toProfilePictureUrl(user.getProfilePictureId())))
                 .sorted(Comparator.comparing(ChatContactResponse::lastInteractionAt,
                         Comparator.nullsLast(Comparator.reverseOrder()))
                         .thenComparing(ChatContactResponse::displayName, String.CASE_INSENSITIVE_ORDER))
@@ -304,7 +313,7 @@ public class ChatService {
         }
 
         if (StringUtils.hasText(msg.getSenderId())) {
-            msg.setSenderId(msg.getSenderId().trim());
+            msg.setSenderId(msg.getSenderId().trim().toLowerCase());
         }
 
         if (StringUtils.hasText(msg.getSenderName())) {

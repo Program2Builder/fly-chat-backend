@@ -19,6 +19,7 @@ public class ChatMessage {
     private MessageType type;
     private String mediaId; // optional media reference
     private Instant timestamp;
+    private MessageStatus status = MessageStatus.SENT;
 
     // E2E Encryption Metadata
     private Boolean isEncrypted = false;
@@ -121,5 +122,13 @@ public class ChatMessage {
 
     public void setEncryptionMetadata(Object encryptionMetadata) {
         this.encryptionMetadata = encryptionMetadata;
+    }
+
+    public MessageStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(MessageStatus status) {
+        this.status = status;
     }
 }

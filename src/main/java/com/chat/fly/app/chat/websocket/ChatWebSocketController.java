@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 
 import com.chat.fly.app.chat.config.ChatProperties;
+import com.chat.fly.app.chat.dto.MessageStatusUpdate;
 import com.chat.fly.app.chat.model.ChatMessage;
 import com.chat.fly.app.chat.model.MessageType;
 import com.chat.fly.app.chat.service.ChatService;
@@ -48,6 +49,23 @@ public class ChatWebSocketController {
             });
         }
         log.debug("Message processed and routed: {}", saved.getId());
+    }
+
+    @MessageMapping("/chat.status")
+    public void updateStatus(MessageStatusUpdate update, Principal principal) {
+        ChatMessage updated = chatService.updateMessageStatus(update.messageId(), update.status());
+
+        if (StringUtils.hasText(updated.getRoomId())) {
+            messagingTemplate.convertAndSend(chatProperties.getWebsocket().getTopicPrefix() + "/room." + updated.getRoomId(), updated);
+        } else {
+            messagingTemplate.convertAndSendToUser(updated.getSenderId(), chatProperties.getWebsocket().getQueuePrefix() + "/messages", updated);
+            if (updated.getRecipients() != null) {
+                updated.getRecipients().forEach(recipient -> {
+                    messagingTemplate.convertAndSendToUser(recipient, chatProperties.getWebsocket().getQueuePrefix() + "/messages", updated);
+                });
+            }
+        }
+        log.debug("Message status updated and routed: {} to {}", updated.getId(), updated.getStatus());
     }
 
     private void applyAuthenticatedSender(ChatMessage message, Principal principal) {

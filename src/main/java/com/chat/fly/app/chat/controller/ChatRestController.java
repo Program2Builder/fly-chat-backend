@@ -9,6 +9,7 @@ import java.util.Objects;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.lang.NonNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +68,7 @@ public class ChatRestController {
     }
 
     @GetMapping("/media/{id}/download")
-    public ResponseEntity<Resource> downloadMedia(@PathVariable String id) throws Exception {
+    public ResponseEntity<Resource> downloadMedia(@PathVariable @NonNull String id) throws Exception {
         Media media = chatService.findMedia(id);
         if (media == null) {
             return ResponseEntity.notFound().build();

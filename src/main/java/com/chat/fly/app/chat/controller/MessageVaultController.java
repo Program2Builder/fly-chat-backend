@@ -46,9 +46,10 @@ public class MessageVaultController {
             Principal principal,
             @Valid @RequestBody VaultStoreRequest request) {
 
-        Long userId = vaultService.resolveUserId(principal.getName());
+        String userId = String.valueOf(vaultService.resolveUserId(principal.getName()));
         VaultEntryResponse response = vaultService.storeEntry(
-                userId, request.messageId(), request.ciphertext());
+                userId, request.messageId(), request.ciphertext(),
+                request.senderId(), request.receiverId());
         return ResponseEntity.ok(response);
     }
 
@@ -67,7 +68,7 @@ public class MessageVaultController {
             throw new IllegalArgumentException("Batch size must not exceed 100 entries");
         }
 
-        Long userId = vaultService.resolveUserId(principal.getName());
+        String userId = String.valueOf(vaultService.resolveUserId(principal.getName()));
         int saved = vaultService.storeEntries(userId, request.entries());
         return ResponseEntity.ok(Map.of("saved", saved));
     }
@@ -83,22 +84,25 @@ public class MessageVaultController {
 
         // Clamp page size to prevent abuse
         int clampedSize = Math.min(size, 500);
-        Long userId = vaultService.resolveUserId(principal.getName());
+        String userId = String.valueOf(vaultService.resolveUserId(principal.getName()));
         VaultPageResponse response = vaultService.getEntries(
-                userId, PageRequest.of(page, clampedSize));
+                userId, principal.getName(), PageRequest.of(page, clampedSize));
         return ResponseEntity.ok(response);
     }
 
-    // ── GET /api/chat/vault/fetch/{messageId} ────────────────────────────────
-    // Retrieve a single vault entry by message ID.
+    // ── GET /api/chat/vault/direct/{targetUsername} ─────────────────────────
+    // Retrieve vault entries for a specific direct conversation.
 
-    @GetMapping("/{messageId}")
-    public ResponseEntity<VaultEntryResponse> getEntry(
+    @GetMapping("/direct/{targetUsername}")
+    public ResponseEntity<VaultPageResponse> getDirectEntries(
             Principal principal,
-            @PathVariable String messageId) {
+            @PathVariable String targetUsername,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
 
-        Long userId = vaultService.resolveUserId(principal.getName());
-        VaultEntryResponse response = vaultService.getEntry(userId, messageId);
+        String userId = String.valueOf(vaultService.resolveUserId(principal.getName()));
+        VaultPageResponse response = vaultService.getDirectEntries(
+                userId, principal.getName(), targetUsername, org.springframework.data.domain.PageRequest.of(page, size));
         return ResponseEntity.ok(response);
     }
 
@@ -110,7 +114,7 @@ public class MessageVaultController {
             Principal principal,
             @PathVariable String messageId) {
 
-        Long userId = vaultService.resolveUserId(principal.getName());
+        String userId = String.valueOf(vaultService.resolveUserId(principal.getName()));
         vaultService.deleteEntry(userId, messageId);
         return ResponseEntity.noContent().build();
     }
